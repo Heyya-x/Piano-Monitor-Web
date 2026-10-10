@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#include <alloca.h>
 #include <alsa/asoundlib.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -107,7 +108,7 @@ int main(int argc, char **argv) {
         }
         double t = now();
         if (t >= next && count) {
-            printf("LEVEL %.4f %.4f\n", sqrt(sum / count), peak);
+            printf("LEVEL %.7f %.7f\n", sqrt(sum / count), peak);
             sum = peak = 0;
             count = 0;
             next = t + .1;

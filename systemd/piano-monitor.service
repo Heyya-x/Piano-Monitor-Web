@@ -13,7 +13,7 @@ ExecStart=/usr/bin/python3 -m monitor.app
 Restart=always
 RestartSec=3
 Environment=PYTHONUNBUFFERED=1
-Environment=GIT_SSH_COMMAND=ssh -o BatchMode=yes -o ConnectTimeout=8
+Environment="GIT_SSH_COMMAND=ssh -i /home/heyya/.ssh/id_ed25519_piano_monitor -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=8"
 NoNewPrivileges=true
 ProtectSystem=strict
 ReadWritePaths=/home/heyya/PianoMonitor

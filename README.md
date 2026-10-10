@@ -7,7 +7,7 @@
 - 本地控制：`http://树莓派地址:8765/`
 - 练习统计：`https://heyya-x.github.io/Piano-Monitor-Web/`
 
-统计按北京时间计算，包含今天、本周、本月及自定义日期。会话结束后写入 `data/sessions/`，同时更新 `docs/data.json` 并推送到 `origin/main`。断网时本地提交会保留，服务每分钟重试推送。
+统计按北京时间计算，包含今天、本周、本月及自定义日期。会话结束后写入 `data/sessions/`，同时更新 `docs/data.json` 并推送到 `origin/main`。没有新会话时不会运行 Git；断网时本地提交会保留，在下一次会话结束后再次尝试推送。
 
 ## 安装
 

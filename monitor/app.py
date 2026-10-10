@@ -165,18 +165,18 @@ class Monitor:
         self.git_event.set()
 
     def git_loop(self):
-        self.git_event.set()
         while True:
-            self.git_event.wait(60)
+            self.git_event.wait()
             self.git_event.clear()
             try:
                 subprocess.run(["git", "add", "data/sessions", "docs/data.json"], cwd=ROOT,
                                timeout=20, check=True, stdout=subprocess.DEVNULL)
                 diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=ROOT,
                                       timeout=20)
-                if diff.returncode:
-                    subprocess.run(["git", "commit", "-m", "Record piano practice session"],
-                                   cwd=ROOT, timeout=20, check=True, stdout=subprocess.DEVNULL)
+                if diff.returncode == 0:
+                    continue
+                subprocess.run(["git", "commit", "-m", "Record piano practice session"],
+                               cwd=ROOT, timeout=20, check=True, stdout=subprocess.DEVNULL)
                 subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
                                timeout=30, check=True, stdout=subprocess.DEVNULL)
             except (subprocess.SubprocessError, OSError) as exc:

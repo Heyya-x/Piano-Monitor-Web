@@ -1,0 +1,5 @@
+audio/audio
+config.json
+.active-session.json
+*.pyc
+__pycache__/

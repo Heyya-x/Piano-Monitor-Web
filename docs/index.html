@@ -34,6 +34,25 @@ input[type=date]{background:#21382f;border:1px solid #5c7866;color:#f2f5f1;borde
 .total strong{font-size:clamp(55px,10vw,90px);font-weight:650;letter-spacing:-.065em;line-height:1.1}
 .total span{font-size:20px;color:#d0e0d2}
 .overview-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;color:#a8c0ad;font-size:14px}
+.contribution-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:20px}
+.contribution-head span{font-size:13px;color:#9eb0a6}
+.calendar-layout{display:flex;gap:10px;min-width:0;--heat-cell:13px;--heat-gap:3px}
+.calendar-weekdays{display:grid;grid-template-rows:repeat(7,var(--heat-cell));gap:var(--heat-gap);padding-top:22px;flex:none;width:18px;color:#8fa99a;font-size:11px;line-height:var(--heat-cell)}
+.calendar-scroll{min-width:0;overflow-x:auto;overflow-y:hidden;padding:0 2px 9px;scrollbar-color:#577164 transparent}
+.calendar-inner{width:max-content}
+.calendar-months{display:grid;gap:var(--heat-gap);height:22px;color:#9eb0a6;font-size:11px}
+.calendar-months span{white-space:nowrap}
+.calendar-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,var(--heat-cell));grid-auto-columns:var(--heat-cell);gap:var(--heat-gap)}
+.calendar-cell{display:block;width:var(--heat-cell);height:var(--heat-cell);padding:0;border:1px solid #3f584b;border-radius:3px;background:#263c31;cursor:pointer}
+.calendar-cell[data-level="1"]{background:#3c6850;border-color:#4c795d}
+.calendar-cell[data-level="2"]{background:#5a9168;border-color:#6a9e75}
+.calendar-cell[data-level="3"]{background:#83b987;border-color:#9bc99b}
+.calendar-cell[data-level="4"]{background:#c2e2b4;border-color:#d4eac9}
+.calendar-cell:hover,.calendar-cell:focus-visible{outline:2px solid #f2f5f1;outline-offset:1px;position:relative;z-index:1}
+.calendar-cell.selected{outline:2px solid #e5f7dc;outline-offset:1px;position:relative;z-index:1}
+.calendar-blank{visibility:hidden}
+.calendar-legend{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:14px;color:#9eb0a6;font-size:12px}
+.calendar-legend .calendar-cell{cursor:default;margin:0 1px}
 .chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:22px}
 .chart-head span{font-size:13px;color:#9eb0a6}
 .chart-layout{display:grid;grid-template-columns:46px minmax(0,1fr);gap:8px}
@@ -52,7 +71,7 @@ input[type=date]{background:#21382f;border:1px solid #5c7866;color:#f2f5f1;borde
 .stat span{font-size:13px;color:#a5bbab}
 .stat b{display:block;font-size:25px;font-weight:620;margin-top:8px;font-variant-numeric:tabular-nums}
 footer{margin-top:28px;color:#809b88;font-size:13px;line-height:1.5}
-@media(max-width:600px){main{padding:23px 15px 55px}.card{border-radius:20px}.tabs button{font-size:13px}.chart-layout{grid-template-columns:35px minmax(0,1fr);gap:5px}.x-axis{margin-left:40px;font-size:10px}.bars,.x-axis{gap:2px}.empty{padding-left:40px}.summary{grid-template-columns:repeat(2,1fr)}.stat{padding:17px}.stat b{font-size:21px}}
+@media(max-width:600px){main{padding:23px 15px 55px}.card{border-radius:20px}.tabs button{font-size:13px}.calendar-layout{--heat-cell:12px;--heat-gap:3px}.chart-layout{grid-template-columns:35px minmax(0,1fr);gap:5px}.x-axis{margin-left:40px;font-size:10px}.bars,.x-axis{gap:2px}.empty{padding-left:40px}.summary{grid-template-columns:repeat(2,1fr)}.stat{padding:17px}.stat b{font-size:21px}}
 </style>
 </head>
 <body>
@@ -69,6 +88,17 @@ footer{margin-top:28px;color:#809b88;font-size:13px;line-height:1.5}
   <div class="label">练习总时长</div>
   <div class="total"><strong id="total">0</strong><span id="unit">分钟</span></div>
   <div class="overview-foot"><span id="period">—</span><span id="updated">—</span></div>
+</section>
+<section class="card contribution" aria-labelledby="calendarTitle">
+  <div class="contribution-head"><h2 id="calendarTitle">练习日历</h2><span>近一年 · 点击日期查看</span></div>
+  <div class="calendar-layout">
+    <div class="calendar-weekdays" aria-hidden="true"><span></span><span>一</span><span></span><span>三</span><span></span><span>五</span><span></span></div>
+    <div class="calendar-scroll" id="calendarScroll"><div class="calendar-inner">
+      <div class="calendar-months" id="calendarMonths" aria-hidden="true"></div>
+      <div class="calendar-grid" id="calendarGrid" aria-label="每日练习时长"></div>
+    </div></div>
+  </div>
+  <div class="calendar-legend" aria-label="颜色越亮，练习时间越长"><span>少</span><i class="calendar-cell" aria-hidden="true"></i><i class="calendar-cell" data-level="1" aria-hidden="true"></i><i class="calendar-cell" data-level="2" aria-hidden="true"></i><i class="calendar-cell" data-level="3" aria-hidden="true"></i><i class="calendar-cell" data-level="4" aria-hidden="true"></i><span>多</span></div>
 </section>
 <section class="card">
   <div class="chart-head"><h2 id="chartTitle">每小时练习</h2><span id="chartNote">北京时间</span></div>
@@ -93,7 +123,70 @@ const $=id=>document.getElementById(id);
 function localDay(ms){return new Date(ms+H).toISOString().slice(0,10)}
 function dayStart(day){return Date.parse(day+'T00:00:00Z')-H}
 function addDay(day,n){return new Date(Date.parse(day+'T00:00:00Z')+n*DAY).toISOString().slice(0,10)}
+function weekday(day){return new Date(day+'T00:00:00Z').getUTCDay()}
 function duration(seconds){if(seconds>0&&seconds<30)return '少于 1 分钟';let m=Math.round(seconds/60);return m>=60?Math.floor(m/60)+' 小时 '+m%60+' 分钟':m+' 分钟'}
+function dailyTotals(){
+  let totals=new Map();
+  for(let s of sessions){
+    let a=Date.parse(s.start),b=Date.parse(s.end);
+    if(!Number.isFinite(a)||!Number.isFinite(b)||b<=a)continue;
+    while(a<b){
+      let day=localDay(a),end=Math.min(b,dayStart(addDay(day,1)));
+      totals.set(day,(totals.get(day)||0)+(end-a)/1000);
+      a=end;
+    }
+  }
+  return totals;
+}
+function updateCalendarSelection(){
+  let [from,to]=bounds(),selected=from===to?from:null;
+  document.querySelectorAll('#calendarGrid button').forEach(cell=>{
+    let active=cell.dataset.day===selected;
+    cell.classList.toggle('selected',active);
+    cell.setAttribute('aria-pressed',active?'true':'false');
+  });
+}
+function renderCalendar(){
+  let today=localDay(Date.now()),first=addDay(today,-364),start=addDay(first,-weekday(first));
+  let weeks=Math.floor((dayStart(today)-dayStart(start))/DAY/7)+1;
+  let totals=dailyTotals(),months=$('calendarMonths'),grid=$('calendarGrid');
+  months.replaceChildren();grid.replaceChildren();
+  months.style.gridTemplateColumns='repeat('+weeks+',var(--heat-cell))';
+  let lastMonth='',monthLabels=[];
+  for(let week=0;week<weeks;week++){
+    for(let dayOfWeek=0;dayOfWeek<7;dayOfWeek++){
+      let day=addDay(start,week*7+dayOfWeek);
+      if(dayOfWeek===0&&day>=first&&day<=today&&day.slice(0,7)!==lastMonth){
+        monthLabels.push({week:week,label:Number(day.slice(5,7))+'月'});
+        lastMonth=day.slice(0,7);
+      }
+      if(day<first||day>today){let blank=document.createElement('span');blank.className='calendar-blank';grid.append(blank);continue}
+      let seconds=totals.get(day)||0,minutes=seconds/60;
+      let level=seconds===0?0:minutes<15?1:minutes<30?2:minutes<60?3:4;
+      let cell=document.createElement('button');cell.type='button';cell.className='calendar-cell';
+      cell.dataset.day=day;cell.dataset.level=String(level);
+      cell.title=day+' · '+duration(seconds);
+      cell.setAttribute('aria-label',day+'，练习'+duration(seconds));
+      cell.onclick=()=>selectDay(day);
+      grid.append(cell);
+    }
+  }
+  monthLabels.forEach((item,index)=>{
+    if(index===0&&monthLabels.length>1&&monthLabels[1].week-item.week<3)return;
+    let label=document.createElement('span');label.textContent=item.label;
+    label.style.gridColumn=String(item.week+1);months.append(label);
+  });
+  updateCalendarSelection();
+  let scroll=$('calendarScroll');scroll.scrollLeft=scroll.scrollWidth;
+}
+function selectDay(day){
+  range='custom';$('from').value=day;$('to').value=day;
+  updateRangeUI();render();
+}
+function updateRangeUI(){
+  document.querySelectorAll('[data-range]').forEach(button=>button.classList.toggle('active',button.dataset.range===range));
+  $('custom').classList.toggle('show',range==='custom');
+}
 function bounds(){
   let today=localDay(Date.now());
   if(range==='today')return [today,today];
@@ -114,6 +207,7 @@ function axisText(seconds){
 }
 function render(){
   let [from,to]=bounds();if(from>to)[from,to]=[to,from];
+  let singleDay=from===to;
   let first=dayStart(from),last=dayStart(addDay(to,1));
   let daily=new Map(),hourly=Array(24).fill(0),count=0;
   for(let s of sessions){
@@ -125,7 +219,7 @@ function render(){
       let nextHour=(Math.floor((a+H)/HOUR)+1)*HOUR-H;
       let end=Math.min(b,nextHour),seconds=(end-a)/1000;
       daily.set(day,(daily.get(day)||0)+seconds);
-      if(range==='today')hourly[hour]+=seconds;
+      if(singleDay)hourly[hour]+=seconds;
       a=end;
     }
   }
@@ -138,7 +232,7 @@ function render(){
   $('average').textContent=duration(total/span);
   $('period').textContent=from===to?from:from+' — '+to;
   let bins=[];
-  if(range==='today'){
+  if(singleDay){
     $('chartTitle').textContent='每小时练习';
     bins=hourly.map((value,hour)=>({key:String(hour).padStart(2,'0')+':00',value,label:hour%3===0?String(hour).padStart(2,'0'):''}));
   }else{
@@ -156,7 +250,7 @@ function render(){
       bins.forEach((bin,i)=>{let day=Number(bin.key.slice(-2));bin.label=(i===0||i===bins.length-1||day%5===0)?String(day):''});
     }
   }
-  $('chartNote').textContent=range==='today'?'24 小时 · 北京时间':bins.length+' '+($('chartTitle').textContent==='每月练习'?'个月':'天')+' · 北京时间';
+  $('chartNote').textContent=singleDay?'24 小时 · 北京时间':bins.length+' '+($('chartTitle').textContent==='每月练习'?'个月':'天')+' · 北京时间';
   let maximum=axisMax(Math.max(0,...bins.map(bin=>bin.value)));
   let axis=$('yAxis');axis.replaceChildren();
   for(let i=4;i>=0;i--){let tick=document.createElement('span');tick.textContent=axisText(maximum*i/4);axis.append(tick)}
@@ -175,17 +269,17 @@ function render(){
     let label=document.createElement('span');label.textContent=bin.label;labels.append(label);
   }
   $('empty').hidden=total>0;
+  updateCalendarSelection();
 }
 document.querySelectorAll('[data-range]').forEach(button=>button.onclick=()=>{
   range=button.dataset.range;
-  document.querySelectorAll('[data-range]').forEach(item=>item.classList.toggle('active',item===button));
-  $('custom').classList.toggle('show',range==='custom');render();
+  updateRangeUI();render();
 });
 $('from').onchange=$('to').onchange=render;
 let today=localDay(Date.now());$('from').value=addDay(today,-6);$('to').value=today;
 fetch('./data.json',{cache:'no-store'}).then(response=>{if(!response.ok)throw Error();return response.json()})
-.then(data=>{sessions=data.sessions||[];$('updated').textContent='已记录 '+sessions.length+' 次';render()})
-.catch(()=>{$('updated').textContent='记录加载失败';render()});
+.then(data=>{sessions=data.sessions||[];$('updated').textContent='已记录 '+sessions.length+' 次';renderCalendar();render()})
+.catch(()=>{$('updated').textContent='记录加载失败';renderCalendar();render()});
 </script>
 </body>
 </html>

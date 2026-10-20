@@ -26,8 +26,12 @@ h2{font-size:19px;margin:0;font-weight:620}
 .tabs{display:flex;gap:6px;padding:5px;background:#14231f;border:1px solid #385247;border-radius:13px;margin-bottom:26px;max-width:460px}
 .tabs button{flex:1;border:0;border-radius:9px;background:transparent;color:#a8beb1;font:inherit;font-size:14px;font-weight:600;padding:10px 6px;cursor:pointer}
 .tabs button.active{background:#d7e9d8;color:#1d3928}
-.custom{display:none;align-items:center;gap:10px;flex-wrap:wrap;margin:-8px 0 22px;color:#b4c5b9}
-.custom.show{display:flex}
+.overview-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start;position:relative}
+.custom{display:none;color:#b4c5b9}
+.custom.show{display:block}
+.custom-head{display:none}
+.custom-fields{display:flex;gap:10px}
+.custom-fields label{display:flex;flex-direction:column;gap:6px;font-size:12px;white-space:nowrap}
 input[type=date]{background:#21382f;border:1px solid #5c7866;color:#f2f5f1;border-radius:9px;padding:9px;font:inherit}
 .label{color:#b2c7b9;font-size:14px;margin-bottom:8px}
 .total{display:flex;align-items:baseline;gap:9px;font-variant-numeric:tabular-nums}
@@ -71,6 +75,8 @@ input[type=date]{background:#21382f;border:1px solid #5c7866;color:#f2f5f1;borde
 .stat span{font-size:13px;color:#a5bbab}
 .stat b{display:block;font-size:25px;font-weight:620;margin-top:8px;font-variant-numeric:tabular-nums}
 footer{margin-top:28px;color:#809b88;font-size:13px;line-height:1.5}
+@media(max-width:780px){.overview{position:relative;z-index:2}.overview-main{display:block}.custom.show{display:none}.custom.show.popover-open{display:block;position:absolute;top:-10px;right:0;left:0;z-index:3;padding:16px;border:1px solid #658674;border-radius:15px;background:#213a30;box-shadow:0 18px 42px #07120f99}.custom-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;font-size:14px;font-weight:600}.custom-head button{border:1px solid #71957b;border-radius:8px;background:#d7e9d8;color:#1d3928;font:inherit;font-size:13px;padding:5px 12px;cursor:pointer}.custom-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.custom-fields label{min-width:0}.custom-fields input{width:100%;min-width:0}}
+@media(max-width:360px){.custom-fields{grid-template-columns:1fr}.custom.show.popover-open{top:-18px}.overview-foot{font-size:12px;gap:6px}}
 @media(max-width:600px){main{padding:23px 15px 55px}.card{border-radius:20px}.tabs button{font-size:13px}.calendar-layout{--heat-cell:12px;--heat-gap:3px}.chart-layout{grid-template-columns:35px minmax(0,1fr);gap:5px}.x-axis{margin-left:40px;font-size:10px}.bars,.x-axis{gap:2px}.empty{padding-left:40px}.summary{grid-template-columns:repeat(2,1fr)}.stat{padding:17px}.stat b{font-size:21px}}
 </style>
 </head>
@@ -84,9 +90,19 @@ footer{margin-top:28px;color:#809b88;font-size:13px;line-height:1.5}
     <button type="button" data-range="month">本月</button>
     <button type="button" data-range="custom">自定义</button>
   </nav>
-  <div class="custom" id="custom"><input type="date" id="from" aria-label="开始日期"><span>至</span><input type="date" id="to" aria-label="结束日期"></div>
-  <div class="label">练习总时长</div>
-  <div class="total"><strong id="total">0</strong><span id="unit">分钟</span></div>
+  <div class="overview-main">
+    <div class="overview-primary">
+      <div class="label">练习总时长</div>
+      <div class="total"><strong id="total">0</strong><span id="unit">分钟</span></div>
+    </div>
+    <div class="custom" id="custom">
+      <div class="custom-head"><span>选择日期</span><button type="button" id="customDone">完成</button></div>
+      <div class="custom-fields">
+        <label>开始日期<input type="date" id="from"></label>
+        <label>结束日期<input type="date" id="to"></label>
+      </div>
+    </div>
+  </div>
   <div class="overview-foot"><span id="period">—</span><span id="updated">—</span></div>
 </section>
 <section class="card contribution" aria-labelledby="calendarTitle">
@@ -118,7 +134,7 @@ footer{margin-top:28px;color:#809b88;font-size:13px;line-height:1.5}
 </main>
 <script>
 const H=8*3600000, DAY=86400000, HOUR=3600000;
-let sessions=[], range='today';
+let sessions=[], range='today',customPopoverOpen=false;
 const $=id=>document.getElementById(id);
 function localDay(ms){return new Date(ms+H).toISOString().slice(0,10)}
 function dayStart(day){return Date.parse(day+'T00:00:00Z')-H}
@@ -188,11 +204,13 @@ function renderCalendar(){
 }
 function selectDay(day){
   range='custom';$('from').value=day;$('to').value=day;
+  customPopoverOpen=false;
   updateRangeUI();render();
 }
 function updateRangeUI(){
   document.querySelectorAll('[data-range]').forEach(button=>button.classList.toggle('active',button.dataset.range===range));
   $('custom').classList.toggle('show',range==='custom');
+  $('custom').classList.toggle('popover-open',range==='custom'&&customPopoverOpen);
 }
 function bounds(){
   let today=localDay(Date.now());
@@ -280,7 +298,16 @@ function render(){
 }
 document.querySelectorAll('[data-range]').forEach(button=>button.onclick=()=>{
   range=button.dataset.range;
+  customPopoverOpen=range==='custom';
   updateRangeUI();render();
+});
+$('customDone').onclick=()=>{customPopoverOpen=false;updateRangeUI()};
+document.addEventListener('click',event=>{
+  if(!customPopoverOpen||$('custom').contains(event.target)||event.target.closest('[data-range="custom"]'))return;
+  customPopoverOpen=false;updateRangeUI();
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&customPopoverOpen){customPopoverOpen=false;updateRangeUI();}
 });
 $('from').onchange=$('to').onchange=render;
 let today=localDay(Date.now());$('from').value=addDay(today,-6);$('to').value=today;

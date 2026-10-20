@@ -67,10 +67,11 @@ input[type=date]{background:#21382f;border:1px solid #5c7866;color:#f2f5f1;borde
 .x-axis{display:grid;gap:3px;margin:10px 0 0 54px;padding:0 3px;color:#97ad9e;font-size:11px;font-variant-numeric:tabular-nums;text-align:center}
 .x-axis span{min-width:0;white-space:nowrap}
 .empty{padding:14px 0 0 54px;color:#a9bbaf;font-size:14px}
-.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .stat{background:#192925;border:1px solid #365047;border-radius:18px;padding:22px}
 .stat span{font-size:13px;color:#a5bbab}
 .stat b{display:block;font-size:25px;font-weight:620;margin-top:8px;font-variant-numeric:tabular-nums}
+@media(max-width:900px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:780px){.overview{position:relative;z-index:2}.overview-main{display:block}.custom.show{display:none}.custom.show.popover-open{display:block;position:absolute;top:-10px;right:0;left:0;z-index:3;padding:16px;border:1px solid #658674;border-radius:15px;background:#213a30;box-shadow:0 18px 42px #07120f99}.custom-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;font-size:14px;font-weight:600}.custom-head button{border:1px solid #71957b;border-radius:8px;background:#d7e9d8;color:#1d3928;font:inherit;font-size:13px;padding:5px 12px;cursor:pointer}.custom-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.custom-fields label{min-width:0}.custom-fields input{width:100%;min-width:0}}
 @media(max-width:360px){.custom-fields{grid-template-columns:1fr}.custom.show.popover-open{top:-18px}.overview-foot{font-size:12px;gap:6px}}
 @media(max-width:600px){main{padding:23px 15px 55px}.card{border-radius:20px}.tabs button{font-size:13px}.calendar-layout{--heat-cell:12px;--heat-gap:3px}.chart-layout{grid-template-columns:35px minmax(0,1fr);gap:5px}.x-axis{margin-left:40px;font-size:10px}.bars,.x-axis{gap:2px}.empty{padding-left:40px}.summary{grid-template-columns:repeat(2,1fr)}.stat{padding:17px}.stat b{font-size:21px}}
@@ -124,6 +125,7 @@ input[type=date]{background:#21382f;border:1px solid #5c7866;color:#f2f5f1;borde
   <div class="stat"><span>练习天数</span><b id="days">0</b></div>
   <div class="stat"><span>练习次数</span><b id="sessions">0</b></div>
   <div class="stat"><span>日均时长</span><b id="average">0 分钟</b></div>
+  <div class="stat"><span>总练习时长</span><b id="allTime">0 分钟</b></div>
 </section>
 </main>
 <script>
@@ -209,8 +211,8 @@ function updateRangeUI(){
 function bounds(){
   let today=localDay(Date.now());
   if(range==='today')return [today,today];
-  if(range==='week'){let weekday=(new Date(dayStart(today)+H).getUTCDay()+6)%7;return [addDay(today,-weekday),addDay(today,6-weekday)]}
-  if(range==='month'){let first=today.slice(0,7)+'-01';let days=new Date(Date.UTC(Number(today.slice(0,4)),Number(today.slice(5,7)),0)).getUTCDate();return [first,addDay(first,days-1)]}
+  if(range==='week'){let weekday=(new Date(dayStart(today)+H).getUTCDay()+6)%7;return [addDay(today,-weekday),today]}
+  if(range==='month')return [today.slice(0,7)+'-01',today];
   return [$('from').value||today,$('to').value||today];
 }
 function axisMax(max){
@@ -306,7 +308,16 @@ document.addEventListener('keydown',event=>{
 $('from').onchange=$('to').onchange=render;
 let today=localDay(Date.now());$('from').value=addDay(today,-6);$('to').value=today;
 fetch('./data.json',{cache:'no-store'}).then(response=>{if(!response.ok)throw Error();return response.json()})
-.then(data=>{sessions=data.sessions||[];$('updated').textContent='已记录 '+sessions.length+' 次';renderCalendar();render()})
+.then(data=>{
+  sessions=data.sessions||[];
+  let allTime=sessions.reduce((sum,s)=>{
+    let start=Date.parse(s.start),end=Date.parse(s.end);
+    return sum+(Number.isFinite(start)&&Number.isFinite(end)&&end>start?(end-start)/1000:0);
+  },0);
+  $('allTime').textContent=duration(allTime);
+  $('updated').textContent='已记录 '+sessions.length+' 次';
+  renderCalendar();render();
+})
 .catch(()=>{$('updated').textContent='记录加载失败';renderCalendar();render()});
 </script>
 </body>

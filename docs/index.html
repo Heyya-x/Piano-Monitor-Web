@@ -140,11 +140,18 @@ function dailyTotals(){
 }
 function updateCalendarSelection(){
   let [from,to]=bounds(),selected=from===to?from:null;
+  let selectedCell=null;
   document.querySelectorAll('#calendarGrid button').forEach(cell=>{
     let active=cell.dataset.day===selected;
     cell.classList.toggle('selected',active);
     cell.setAttribute('aria-pressed',active?'true':'false');
+    if(active)selectedCell=cell;
   });
+  if(selectedCell){
+    let scroll=$('calendarScroll'),area=scroll.getBoundingClientRect(),square=selectedCell.getBoundingClientRect();
+    if(square.right>area.right)scroll.scrollLeft+=square.right-area.right+4;
+    else if(square.left<area.left)scroll.scrollLeft-=area.left-square.left+4;
+  }
 }
 function renderCalendar(){
   let today=localDay(Date.now()),first=addDay(today,-364),start=addDay(first,-weekday(first));

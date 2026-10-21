@@ -151,7 +151,7 @@ function dailyTotals(){
   return totals;
 }
 function updateCalendarSelection(){
-  let [from,to]=bounds(),selected=from===to?from:null;
+  let [from,to]=bounds(),selected=range==='custom'&&from===to?from:null;
   let selectedCell=null;
   document.querySelectorAll('#calendarGrid button').forEach(cell=>{
     let active=cell.dataset.day===selected;
@@ -199,7 +199,9 @@ function renderCalendar(){
   let scroll=$('calendarScroll');scroll.scrollLeft=scroll.scrollWidth;
 }
 function selectDay(day){
-  range='custom';$('from').value=day;$('to').value=day;
+  let selected=range==='custom'&&$('from').value===day&&$('to').value===day;
+  range=selected?'today':'custom';
+  if(!selected){$('from').value=day;$('to').value=day;}
   customPopoverOpen=false;
   updateRangeUI();render();
 }

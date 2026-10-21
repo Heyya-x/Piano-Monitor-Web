@@ -51,7 +51,7 @@ input[type=date]{background:#21382f;border:1px solid #5c7866;color:#f2f5f1;borde
 .calendar-cell[data-level="2"]{background:#5a9168;border-color:#6a9e75}
 .calendar-cell[data-level="3"]{background:#83b987;border-color:#9bc99b}
 .calendar-cell[data-level="4"]{background:#c2e2b4;border-color:#d4eac9}
-.calendar-cell:hover,.calendar-cell:focus-visible{outline:2px solid #f2f5f1;outline-offset:1px;position:relative;z-index:1}
+.calendar-cell:focus-visible{outline:2px solid #f2f5f1;outline-offset:1px;position:relative;z-index:1}
 .calendar-cell.selected{outline:2px solid #e5f7dc;outline-offset:1px;position:relative;z-index:1}
 .calendar-blank{visibility:hidden}
 .chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:22px}
@@ -186,7 +186,7 @@ function renderCalendar(){
       cell.dataset.day=day;cell.dataset.level=String(level);
       cell.title=day+' · '+duration(seconds);
       cell.setAttribute('aria-label',day+'，练习'+duration(seconds));
-      cell.onclick=()=>selectDay(day);
+      cell.onclick=event=>selectDay(day,event);
       grid.append(cell);
     }
   }
@@ -198,8 +198,9 @@ function renderCalendar(){
   updateCalendarSelection();
   let scroll=$('calendarScroll');scroll.scrollLeft=scroll.scrollWidth;
 }
-function selectDay(day){
+function selectDay(day,event){
   let selected=range==='custom'&&$('from').value===day&&$('to').value===day;
+  if(selected&&event.detail>0)event.currentTarget.blur();
   range=selected?'today':'custom';
   if(!selected){$('from').value=day;$('to').value=day;}
   customPopoverOpen=false;

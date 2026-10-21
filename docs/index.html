@@ -46,7 +46,7 @@ input[type=date]{background:#21382f;border:1px solid #5c7866;color:#f2f5f1;borde
 .calendar-months{display:grid;gap:var(--heat-gap);height:22px;color:#9eb0a6;font-size:11px}
 .calendar-months span{white-space:nowrap}
 .calendar-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,var(--heat-cell));grid-auto-columns:var(--heat-cell);gap:var(--heat-gap)}
-.calendar-cell{display:block;width:var(--heat-cell);height:var(--heat-cell);padding:0;border:1px solid #3f584b;border-radius:3px;background:#263c31;cursor:pointer}
+.calendar-cell{display:block;width:var(--heat-cell);height:var(--heat-cell);padding:0;border:1px solid #3f584b;border-radius:3px;background:#263c31;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .calendar-cell[data-level="1"]{background:#3c6850;border-color:#4c795d}
 .calendar-cell[data-level="2"]{background:#5a9168;border-color:#6a9e75}
 .calendar-cell[data-level="3"]{background:#83b987;border-color:#9bc99b}
@@ -200,7 +200,11 @@ function renderCalendar(){
 }
 function selectDay(day,event){
   let selected=range==='custom'&&$('from').value===day&&$('to').value===day;
-  if(selected&&event.detail>0)event.currentTarget.blur();
+  if(selected){
+    let cell=event.currentTarget;
+    cell.blur();
+    requestAnimationFrame(()=>cell.blur());
+  }
   range=selected?'today':'custom';
   if(!selected){$('from').value=day;$('to').value=day;}
   customPopoverOpen=false;
